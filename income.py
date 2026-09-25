@@ -31,6 +31,7 @@ df.replace('?', 'Unknown', inplace=True)
 # 2. إعداد تطبيق Dash
 # ==========================================
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+server = app.server
 app.title = "لوحة تحكم تحليل الدخل والديموغرافيا"
 
 # خيارات الفلاتر
@@ -318,4 +319,4 @@ def update_dashboard(selected_income, selected_sex, selected_workclass, age_rang
 # 5. تشغيل السيرفر
 # ==========================================
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=False)
