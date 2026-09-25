@@ -5,6 +5,7 @@ seaborn
 plotly
 dash
 nbformat
+dash_bootstrap_components
 scikit-learn 
 streamlit 
 joblib
