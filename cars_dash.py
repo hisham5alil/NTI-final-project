@@ -26,7 +26,10 @@ df_clean = df[(df['price_clean'] > 10000) & (df['price_clean'] <= 30000000) & (d
 # ==========================================
 # 2. إعداد تطبيق Dash
 # ==========================================
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.FLATLY]
+)
 app.title = "لوحة تحكم تحليل سوق السيارات"
 
 # قائمة الماركات والوقود
@@ -283,4 +286,4 @@ def update_dashboard(selected_brand, selected_condition, selected_fuel, year_ran
 # 5. تشغيل السيرفر
 # ==========================================
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=False)
