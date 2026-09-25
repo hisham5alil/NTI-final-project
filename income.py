@@ -1,4 +1,3 @@
-
 import os
 
 # تحديد عدد الأنوية المتاحة لـ OpenBLAS لتجنب استهلاك الذاكرة المفرط
@@ -139,6 +138,17 @@ app.layout = dbc.Container([
         dbc.Col(dcc.Graph(id='workclass-income-chart'), md=6),
     ], className="mb-4"),
 
+    # الرسوم البيانية الجديدة - الصف الرابع (Histogram & Correlation Heatmap)
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='hours-histogram-chart'), md=6),
+        dbc.Col(dcc.Graph(id='correlation-heatmap-chart'), md=6),
+    ], className="mb-4"),
+
+    # الرسوم البيانية الجديدة - الصف الخامس (Boxplot)
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='hours-boxplot-chart'), md=12),
+    ], className="mb-4"),
+
 ], fluid=True, style={'backgroundColor': '#f8f9fa', 'padding': '20px'})
 
 
@@ -157,6 +167,9 @@ app.layout = dbc.Container([
         Output('hours-by-occupation-chart', 'figure'),
         Output('marital-income-chart', 'figure'),
         Output('workclass-income-chart', 'figure'),
+        Output('hours-histogram-chart', 'figure'),
+        Output('correlation-heatmap-chart', 'figure'),
+        Output('hours-boxplot-chart', 'figure'),
     ],
     [
         Input('income-filter', 'value'),
@@ -192,7 +205,6 @@ def update_dashboard(selected_income, selected_sex, selected_workclass, age_rang
 
     # 1. الدخل حسب المستوى التعليمي (Stacked Bar Chart)
     edu_income = dff.groupby(['education', 'income']).size().reset_index(name='count')
-    # ترتيب التعليم حسب متوسط التعليم الرقمي إن أمكن
     edu_order = dff.groupby('education')['education-num'].mean().sort_values().index.tolist()
     fig_edu = px.bar(
         edu_income, x='education', y='count', color='income',
@@ -253,6 +265,39 @@ def update_dashboard(selected_income, selected_sex, selected_workclass, age_rang
     )
     fig_work.update_layout(template='plotly_white', xaxis_tickangle=-30)
 
+    # 7. Histogram: توزيع ساعات العمل الأسبوعية (Histogram)
+    fig_hours_hist = px.histogram(
+        dff, x='hours-per-week', color='income', barmode='overlay',
+        title="توزيع ساعات العمل الأسبوعية حسب الدخل (Histogram)",
+        labels={'hours-per-week': 'ساعات العمل أسبوعياً', 'count': 'العدد', 'income': 'فئة الدخل'},
+        color_discrete_map={'<=50K': '#3498db', '>50K': '#2ecc71'},
+        opacity=0.7, nbins=20
+    )
+    fig_hours_hist.update_layout(template='plotly_white', yaxis_title="عدد الأفراد")
+
+    # 8. Heatmap: خريطة الارتباط الحرارية للمتغيرات الرقمية (Correlation Heatmap)
+    num_cols = ['age', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week']
+    valid_cols = [c for c in num_cols if c in dff.columns]
+    corr_df = dff[valid_cols].corr()
+    fig_heatmap = px.imshow(
+        corr_df,
+        text_auto=".2f",
+        aspect="auto",
+        title="خريطة الارتباط الحرارية للمتغيرات الرقمية (Correlation Heatmap)",
+        color_continuous_scale='Viridis'
+    )
+    fig_heatmap.update_layout(template='plotly_white')
+
+    # 9. Boxplot: توزيع ساعات العمل بحسب التعليم والفئة المالية (Box Plot)
+    fig_hours_box = px.box(
+        dff, x='education', y='hours-per-week', color='income',
+        title="توزيع ساعات العمل والقيم الشاذة حسب المستوى التعليمي والدخل (Box Plot)",
+        labels={'education': 'المستوى التعليمي', 'hours-per-week': 'ساعات العمل / أسبوع', 'income': 'فئة الدخل'},
+        category_orders={'education': edu_order},
+        color_discrete_map={'<=50K': '#3498db', '>50K': '#2ecc71'}
+    )
+    fig_hours_box.update_layout(template='plotly_white', xaxis_tickangle=-45)
+
     return (
         f"{total_records:,}",
         high_income_pct,
@@ -263,7 +308,10 @@ def update_dashboard(selected_income, selected_sex, selected_workclass, age_rang
         fig_age,
         fig_occ,
         fig_marital,
-        fig_work
+        fig_work,
+        fig_hours_hist,
+        fig_heatmap,
+        fig_hours_box
     )
 
 # ==========================================
