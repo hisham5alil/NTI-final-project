@@ -11,85 +11,136 @@ import pickle
 
 from xgboost import XGBClassifier, XGBRegressor
 
+import streamlit as st
+import pandas as pd
+import pickle
+
+from xgboost import XGBClassifier, XGBRegressor
+
+
 # ============================================================
 # PAGE CONFIG
 # ============================================================
 
 st.set_page_config(
     page_title="AI Income & Car Price Predictor",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_icon="🚗",
+    layout="wide"
 )
 
+
 # ============================================================
-# CUSTOM STYLING (CSS)
+# CUSTOM STYLING (visual layer only — no logic below is affected)
 # ============================================================
 
-st.markdown("""
-<style>
-    /* Main container padding */
-    .main .block-container {
-        padding-top: 2rem;
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"], [data-testid="stAppViewContainer"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    [data-testid="stAppViewContainer"] {
+        background-color: #F7F8FA;
+    }
+
+    [data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0);
+    }
+
+    .block-container {
+        padding-top: 2.5rem;
         padding-bottom: 3rem;
-        max-width: 1200px;
-    }
-    
-    /* Global font settings */
-    html, body, [class*="css"] {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    /* Header gradient banner */
-    .hero-header {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        padding: 2.5rem 2rem;
-        border-radius: 16px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
-    }
-    .hero-header h1 {
-        color: #ffffff !important;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    .hero-header p {
-        color: #e0e6ed !important;
-        font-size: 1.1rem;
+        max-width: 1100px;
     }
 
-    /* Section Cards */
-    div[data-testid="stExpander"], div.stCard {
-        border-radius: 12px;
-        border: 1px solid #e1e8ed;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    h1 {
+        font-weight: 800 !important;
+        color: #0F172A !important;
+        letter-spacing: -0.02em;
     }
-    
-    /* Metric Card Styling */
-    div[data-testid="stMetric"] {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+
+    h2 {
+        font-weight: 700 !important;
+        color: #0F172A !important;
+        letter-spacing: -0.01em;
     }
-    
-    /* Primary Action Buttons */
-    .stButton > button {
-        border-radius: 10px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
+
+    h3 {
+        font-weight: 600 !important;
+        color: #1E293B !important;
     }
-    
-    /* Divider spacing */
+
+    /* Section header accents — colour encodes which tool the section belongs to */
+    div:has(> div > div > h2#income-prediction) {
+        border-left: 4px solid #4F46E5;
+        padding-left: 14px;
+    }
+
+    div:has(> div > div > h2#car-price-prediction) {
+        border-left: 4px solid #B45309;
+        padding-left: 14px;
+    }
+
+    p, span, label, .stMarkdown {
+        color: #334155;
+    }
+
     hr {
-        margin: 2.5rem 0;
+        border-color: #E2E8F0 !important;
+        margin: 2rem 0 !important;
     }
-</style>
-""", unsafe_allow_html=True)
+
+    /* Input widgets */
+    div[data-baseweb="select"] > div,
+    input[type="number"] {
+        border-radius: 8px !important;
+        border-color: #E2E8F0 !important;
+    }
+
+    div[data-baseweb="select"] > div:focus-within,
+    input[type="number"]:focus {
+        border-color: #4F46E5 !important;
+        box-shadow: 0 0 0 1px #4F46E5 !important;
+    }
+
+    /* Bordered containers used to group each section's inputs */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 12px !important;
+        border-color: #E2E8F0 !important;
+        background-color: #FFFFFF;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        border: none;
+        background-color: #0F172A;
+        color: #FFFFFF;
+        transition: transform 0.1s ease, background-color 0.15s ease;
+    }
+
+    .stButton > button:hover {
+        background-color: #1E293B;
+        transform: translateY(-1px);
+    }
+
+    .stButton > button:active {
+        transform: translateY(0px);
+    }
+
+    /* Success box */
+    [data-testid="stAlert"] {
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ============================================================
@@ -209,118 +260,125 @@ def predict_car_price(car_data):
 
 
 # ============================================================
-# HERO TITLE HEADER
+# TITLE
 # ============================================================
 
-st.markdown("""
-<div class="hero-header">
-    <h1>🚀 AI Income & Car Price Predictor</h1>
-    <p>Advanced Machine Learning portal for Demographics Analysis & Vehicle Valuation</p>
-</div>
-""", unsafe_allow_html=True)
+st.title("🚗 AI Income & Car Price Predictor")
 
+st.write(
+    "Predict income probability and estimate the market price "
+    "of a car using Machine Learning."
+)
 
-# ============================================================
-# TAB-BASED LAYOUT FOR BETTER NAVIGATION
-# ============================================================
-
-tab1, tab2 = st.tabs(["👤 Income Prediction", "🚘 Car Price Prediction"])
+st.divider()
 
 
 # ============================================================
-# TAB 1: INCOME SECTION
+# INCOME SECTION
 # ============================================================
 
-with tab1:
-    st.markdown("### 📋 Demographic & Work Profile")
-    st.caption("Provide the user attributes below to estimate high-income probability.")
+st.header("👤 Income Prediction", anchor="income-prediction")
 
-    with st.container():
-        col1, col2, col3 = st.columns(3)
+income_inputs = st.container(border=True)
 
-        with col1:
-            age = st.number_input(
-                "Age",
-                min_value=17,
-                max_value=100,
-                value=35
-            )
-
-            workclass = st.selectbox(
-                "Workclass",
-                label_encoders["workclass"].classes_
-            )
-
-            education = st.selectbox(
-                "Education",
-                label_encoders["education"].classes_
-            )
-
-            education_num = st.number_input(
-                "Education Number",
-                min_value=1,
-                max_value=16,
-                value=13
-            )
-
-        with col2:
-            marital_status = st.selectbox(
-                "Marital Status",
-                label_encoders["marital-status"].classes_
-            )
-
-            occupation = st.selectbox(
-                "Occupation",
-                label_encoders["occupation"].classes_
-            )
-
-            relationship = st.selectbox(
-                "Relationship",
-                label_encoders["relationship"].classes_
-            )
-
-            race = st.selectbox(
-                "Race",
-                label_encoders["race"].classes_
-            )
-
-        with col3:
-            sex = st.selectbox(
-                "Sex",
-                label_encoders["sex"].classes_
-            )
-
-            native_country = st.selectbox(
-                "Native Country",
-                label_encoders["native-country"].classes_
-            )
-
-            fnlwgt = st.number_input(
-                "Final Weight",
-                min_value=0,
-                value=180000
-            )
-
-    st.markdown("---")
-    st.markdown("### 💰 Financial Indicators & Workload")
+with income_inputs:
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        capital_gain = st.number_input(
-            "Capital Gain ($)",
-            min_value=0,
-            value=0
+
+        age = st.number_input(
+            "Age",
+            min_value=17,
+            max_value=100,
+            value=35
         )
+
+        workclass = st.selectbox(
+            "Workclass",
+            label_encoders["workclass"].classes_
+        )
+
+        education = st.selectbox(
+            "Education",
+            label_encoders["education"].classes_
+        )
+
+        education_num = st.number_input(
+            "Education Number",
+            min_value=1,
+            max_value=16,
+            value=13
+        )
+
 
     with col2:
-        capital_loss = st.number_input(
-            "Capital Loss ($)",
+
+        marital_status = st.selectbox(
+            "Marital Status",
+            label_encoders["marital-status"].classes_
+        )
+
+        occupation = st.selectbox(
+            "Occupation",
+            label_encoders["occupation"].classes_
+        )
+
+        relationship = st.selectbox(
+            "Relationship",
+            label_encoders["relationship"].classes_
+        )
+
+        race = st.selectbox(
+            "Race",
+            label_encoders["race"].classes_
+        )
+
+
+    with col3:
+
+        sex = st.selectbox(
+            "Sex",
+            label_encoders["sex"].classes_
+        )
+
+        native_country = st.selectbox(
+            "Native Country",
+            label_encoders["native-country"].classes_
+        )
+
+        fnlwgt = st.number_input(
+            "Final Weight",
+            min_value=0,
+            value=180000
+        )
+
+
+    st.subheader("💰 Work & Financial Information")
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        capital_gain = st.number_input(
+            "Capital Gain",
             min_value=0,
             value=0
         )
 
+
+    with col2:
+
+        capital_loss = st.number_input(
+            "Capital Loss",
+            min_value=0,
+            value=0
+        )
+
+
     with col3:
+
         hours_per_week = st.number_input(
             "Hours per Week",
             min_value=1,
@@ -328,14 +386,15 @@ with tab1:
             value=40
         )
 
-    st.markdown("<br>", unsafe_allow_html=True)
 
     if st.button(
         "Calculate Income Probability",
         type="primary",
         use_container_width=True
     ):
+
         user_data = {
+
             "age": age,
             "workclass": workclass,
             "fnlwgt": fnlwgt,
@@ -353,40 +412,60 @@ with tab1:
         }
 
         probability = predict_income(user_data)
+
         st.session_state["income_probability"] = probability
 
-    # DISPLAY INCOME RESULT
-    if "income_probability" in st.session_state:
-        probability = st.session_state["income_probability"]
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.info("📊 **Prediction Results**")
-        
-        res_col1, res_col2 = st.columns([1, 2])
-        with res_col1:
-            st.metric(
-                label="High Income Probability (>50K)",
-                value=f"{probability:.2%}"
-            )
-        with res_col2:
-            st.progress(float(probability))
-            if probability >= 0.5:
-                st.success("High probability of earning >$50K/year based on demographic indicators.")
-            else:
-                st.warning("Moderate or lower probability of earning >$50K/year based on input profile.")
+# ============================================================
+# DISPLAY INCOME RESULT
+# ============================================================
+
+if "income_probability" in st.session_state:
+
+    probability = st.session_state["income_probability"]
+
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, #4F46E5, #4338CA);
+            border-radius: 14px;
+            padding: 26px 32px;
+            margin-top: 18px;
+            color: #FFFFFF;
+        ">
+            <div style="font-size: 14px; opacity: 0.85; margin-bottom: 6px;">
+                Income probability
+            </div>
+            <div style="font-size: 42px; font-weight: 800; line-height: 1.1;">
+                {probability:.2%}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # ============================================================
-# TAB 2: CAR PRICE SECTION
+# CAR PRICE SECTION
 # ============================================================
 
-with tab2:
-    st.markdown("### 🚗 Vehicle Specifications")
-    st.caption("Select your vehicle attributes to calculate estimated market value.")
+st.divider()
+
+st.header("🚘 Car Price Prediction", anchor="car-price-prediction")
+
+st.write(
+    "Enter the car specifications to estimate its price."
+)
+
+car_inputs = st.container(border=True)
+
+with car_inputs:
 
     col1, col2, col3 = st.columns(3)
 
+
     with col1:
+
         brand = st.selectbox(
             "Brand",
             sorted(encoding_maps["brand"].keys())
@@ -398,32 +477,36 @@ with tab2:
         )
 
         year = st.number_input(
-            "Year of Manufacture",
+            "Year",
             min_value=1990,
             max_value=2026,
             value=2020
         )
 
+
     with col2:
+
         condition = st.selectbox(
             "Condition",
             sorted(encoding_maps["condition"].keys())
         )
 
         kilo_meter = st.number_input(
-            "Mileage (Kilometers)",
+            "Kilometers",
             min_value=0,
             value=80000
         )
 
         color = st.selectbox(
-            "Exterior Color",
+            "Color",
             sorted(encoding_maps["color"].keys())
         )
 
+
     with col3:
+
         power_trans = st.selectbox(
-            "Transmission Type",
+            "Transmission",
             sorted(encoding_maps["power_trans"].keys())
         )
 
@@ -433,18 +516,19 @@ with tab2:
         )
 
         location = st.selectbox(
-            "Location / Region",
+            "Location",
             sorted(encoding_maps["location"].keys())
         )
 
-    st.markdown("<br>", unsafe_allow_html=True)
 
     if st.button(
         "Predict Car Price",
         type="primary",
         use_container_width=True
     ):
+
         car_data = {
+
             "brand": brand,
             "model": model_name,
             "year": year,
@@ -457,20 +541,38 @@ with tab2:
         }
 
         predicted_price = predict_car_price(car_data)
+
         st.session_state["predicted_price"] = predicted_price
 
-    # DISPLAY CAR PRICE
-    if "predicted_price" in st.session_state:
-        predicted_price = st.session_state["predicted_price"]
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.success("💵 **Valuation Complete**")
+# ============================================================
+# DISPLAY CAR PRICE
+# ============================================================
 
-        res_col1, res_col2 = st.columns([1, 2])
-        with res_col1:
-            st.metric(
-                label="Estimated Market Price",
-                value=f"{predicted_price:,.0f} EGP"
-            )
-        with res_col2:
-            st.caption("Estimation considers current market trends, vehicle condition, and mileage deprecation.")
+if "predicted_price" in st.session_state:
+
+    predicted_price = st.session_state["predicted_price"]
+
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, #B45309, #92400E);
+            border-radius: 14px;
+            padding: 26px 32px;
+            margin-top: 18px;
+            color: #FFFFFF;
+        ">
+            <div style="font-size: 14px; opacity: 0.85; margin-bottom: 6px;">
+                Estimated car price
+            </div>
+            <div style="font-size: 42px; font-weight: 800; line-height: 1.1;">
+                {predicted_price:,.0f} EGP
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.success(
+        "The estimated car price has been calculated successfully."
+    )
