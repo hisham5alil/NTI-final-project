@@ -517,9 +517,10 @@ if "income_probability" in st.session_state:
             value=80000
         )
 
+        color_options = sorted(encoding_maps["color"].keys())
         color = st.selectbox(
             "Color",
-            sorted(encoding_maps["color"].keys())
+            color_options
         )
 
     with col3:
