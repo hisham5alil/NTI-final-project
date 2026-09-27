@@ -9,7 +9,6 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 import streamlit as st
 import pandas as pd
 import pickle
-
 from xgboost import XGBClassifier, XGBRegressor
 
 
@@ -217,13 +216,10 @@ categorical_cols = car_artifacts["categorical_cols"]
 def predict_income(user_data):
 
     X_user = pd.DataFrame([user_data])
-
     for col, le in label_encoders.items():
-
         X_user[col] = le.transform(
             X_user[col].astype(str)
         )
-
     X_user = X_user[
         [
             "age",
@@ -311,7 +307,6 @@ st.markdown(
 
 
 col1, col2, col3 = st.columns(3)
-
 
 with col1:
 
