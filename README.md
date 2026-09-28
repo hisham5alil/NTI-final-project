@@ -386,6 +386,7 @@ Through this project, I practiced:
 ## Author
 
 **Hisham Mohamed Khalil**
+**Mohamed Ibrahim Elnahal**
 
 Machine Learning / AI Developer
 
